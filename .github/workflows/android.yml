@@ -3,11 +3,13 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,11 +25,11 @@ jobs:
         with:
           gradle-version: '8.9'
 
-            - name: Install Android SDK
+      - name: Install Android SDK
         run: |
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          SDKMANAGER="$(find "$ANDROID_HOME" -type f -name sdkmanager | head -n 1)"
           if [ -z "$SDKMANAGER" ]; then
-            echo "sdkmanager not found in Android SDK"
+            echo "ERROR: sdkmanager not found"
             exit 1
           fi
           yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses
@@ -35,3 +37,12 @@ jobs:
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0"
+
+      - name: Build APK
+        run: gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppVersionChecker-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
